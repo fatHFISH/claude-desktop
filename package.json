@@ -1,0 +1,35 @@
+{
+  "name": "claude-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "main": "main.js",
+  "scripts": {
+    "start": "node server.js",
+    "app": "electron .",
+    "build": "electron-builder --win portable"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "express": "^4.21.0"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.0.0",
+    "electron-packager": "^17.1.2"
+  },
+  "build": {
+    "appId": "com.claude.desktop",
+    "productName": "Claude",
+    "win": {
+      "target": "portable",
+      "sign": false,
+      "icon": "public/favicon.ico"
+    },
+    "files": [
+      "main.js",
+      "public/**/*",
+      "node_modules/**/*"
+    ],
+    "asar": false
+  }
+}
