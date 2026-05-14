@@ -119,12 +119,34 @@ expressApp.post('/api/workspace', (req, res) => {
   else res.status(400).json({ error: '目录不存在' });
 });
 
+expressApp.get('/api/workspace/files', (req, res) => {
+  const dirPath = req.query.path || WORKSPACE;
+  try {
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    const files = entries
+      .filter(e => !e.name.startsWith('.'))
+      .sort((a, b) => {
+        if (a.isDirectory() && !b.isDirectory()) return -1;
+        if (!a.isDirectory() && b.isDirectory()) return 1;
+        return a.name.localeCompare(b.name);
+      })
+      .map(e => ({
+        name: e.name,
+        type: e.isDirectory() ? 'dir' : 'file',
+        path: path.join(dirPath, e.name),
+      }));
+    res.json(files);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
+  }
+});
+
 const PORT = 3000;
 let server, mainWindow;
 
 function createWindow() {
   mainWindow = new BrowserWindow({
-    width: 920, height: 720, minWidth: 600, minHeight: 500,
+    width: 1180, height: 720, minWidth: 800, minHeight: 500,
     frame: false, titleBarStyle: 'hidden', backgroundColor: '#ffffff',
     webPreferences: { nodeIntegration: true, contextIsolation: false },
   });

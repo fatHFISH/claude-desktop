@@ -108,7 +108,7 @@ app.post('/api/chat', async (req, res) => {
   const apiKey = config.apiKey || process.env.ANTHROPIC_API_KEY || process.env.ANTHROPIC_AUTH_TOKEN;
   if (!apiKey) {
     res.setHeader('Content-Type', 'text/event-stream');
-    res.write(`data: ${JSON.stringify({ type: 'error', error: '请先在设置中填写 API Key' })}\n\n`);
+    res.write(`data: ${JSON.stringify({ type: 'error', error: '请先在设置中填写 API Key。如果在国内网络环境，请同时设置 API 代理地址。' })}\n\n`);
     res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
     return res.end();
   }
@@ -130,7 +130,7 @@ app.post('/api/chat', async (req, res) => {
       const stream = await client.messages.stream({
         model,
         max_tokens: 4096,
-        system: system || 'You are Claude, an AI assistant made by Anthropic. You have tools for reading/writing files, running commands, and searching code. Use them when helpful. Respond in the same language the user uses.',
+        system: system || '你是 Claude，由 Anthropic 开发的 AI 助手。你可以读写文件、执行命令、搜索代码。请用用户的语言回复。',
         messages: currentMessages,
         tools,
       });
@@ -177,6 +177,28 @@ app.post('/api/workspace', (req, res) => {
     res.json({ ok: true, path: WORKSPACE });
   } else {
     res.status(400).json({ error: '目录不存在' });
+  }
+});
+
+app.get('/api/workspace/files', (req, res) => {
+  const dirPath = req.query.path || WORKSPACE;
+  try {
+    const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+    const files = entries
+      .filter(e => !e.name.startsWith('.'))
+      .sort((a, b) => {
+        if (a.isDirectory() && !b.isDirectory()) return -1;
+        if (!a.isDirectory() && b.isDirectory()) return 1;
+        return a.name.localeCompare(b.name);
+      })
+      .map(e => ({
+        name: e.name,
+        type: e.isDirectory() ? 'dir' : 'file',
+        path: path.join(dirPath, e.name),
+      }));
+    res.json(files);
+  } catch (e) {
+    res.status(400).json({ error: e.message });
   }
 });
 
